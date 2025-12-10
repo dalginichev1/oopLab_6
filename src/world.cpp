@@ -1,29 +1,35 @@
 #include "world.hpp"
 
-void World::add(std::shared_ptr<NPC> npc)
-{
+#include <iostream>
+
+void World::add(std::shared_ptr<NPC> npc) {
     npcs.insert(npc);
 }
 
-void World::remove(std::shared_ptr<NPC> npc)
-{
+void World::remove(std::shared_ptr<NPC> npc) {
     npcs.erase(npc);
 }
 
-void World::update(size_t fight_distance)
-{
-    BattleVisitor visitor;
+World::set_t World::fight(size_t distance) {
+    set_t dead_list;
 
-    std::vector<std::shared_ptr<NPC>> dead;
+    for (const auto& attacker : npcs) {
+        for (const auto& defender : npcs) {
+            if ((attacker != defender) && attacker->is_close(defender, distance) &&
+                !dead_list.count(defender)) {
 
-    for (auto& a: npcs)
-    {
-        for (auto& b: npcs)
-        {
-            if (a != b && a->is_close(b, fight_distance))
-            {
-                a->accept(visitor, b);
+                bool success = defender->accept(attacker);
+                if (success) {
+                    dead_list.insert(defender);
+                }
             }
         }
     }
+
+    return dead_list;
+}
+
+void World::print() const {
+    for (auto& n : npcs)
+        n->print();
 }

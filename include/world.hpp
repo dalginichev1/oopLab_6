@@ -3,15 +3,16 @@
 #include <set>
 #include <memory>
 #include "npc.hpp"
-#include "battle_visitor.hpp"
 
-struct World
-{
-    using set_t = std::set<std::shared_ptr<NPC>>;
+struct World {
+  using set_t = std::set<std::shared_ptr<NPC>>;
+  set_t npcs;
 
-    set_t npcs;
-
-    void add(std::shared_ptr<NPC> npc);
-    void remove(std::shared_ptr<NPC> npc);
-    void update(size_t fight_distance);
+  void add(std::shared_ptr<NPC> npc);
+  void remove(std::shared_ptr<NPC> npc);
+  
+  // Функция для обработки боев
+  set_t fight(size_t distance);
+  
+  void print() const;
 };

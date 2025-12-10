@@ -2,19 +2,15 @@
 
 #include "npc.hpp"
 
-struct Orc: public NPC
-{
-    Orc(int x, int y);
-    Orc(std::istream& is);
-
-    bool is_orc() const override;
-
-    bool fight(std::shared_ptr<Orc> other) override;
-    bool fight(std::shared_ptr<Bear> other) override;
-    bool fight(std::shared_ptr<Squirrel> other) override;
-
-    void accept(Visitor& vis, std::shared_ptr<NPC> other) override;
-
-    void print() override;
-    void save(std::ostream& os) override;
+struct Orc : public NPC {
+  Orc(int x_, int y_);
+  Orc(std::istream &is);
+  
+  bool accept(const std::shared_ptr<NPC> &attacker) override;
+  bool visit_orc(const std::shared_ptr<Orc> &defender) override;
+  bool visit_bear(const std::shared_ptr<Bear> &defender) override;
+  bool visit_squirrel(const std::shared_ptr<Squirrel> &defender) override;
+  
+  void print() const override;
+  void save(std::ostream &os) const override;
 };

@@ -1,60 +1,47 @@
+// npc.hpp (полностью исправленный)
 #pragma once
 
+#include <cmath>
 #include <iostream>
 #include <memory>
-#include <string>
-#include <set>
 #include <vector>
-#include <cmath>
 
-struct Visitor;
-
-struct NPC;
 struct Orc;
 struct Bear;
 struct Squirrel;
 
-enum class NpcType
-{
-    Unknown = 0,
-    OrcType = 1,
-    BearType = 2,
-    SquirrelType = 3
+enum NpcType { UnknownType = 0, OrcType = 1, BearType = 2, SquirrelType = 3 };
+
+struct NPC;
+
+struct IFightObserver {
+    virtual void on_fight(const std::shared_ptr<NPC>& attacker,
+                          const std::shared_ptr<NPC>& defender, bool win) = 0;
+    virtual ~IFightObserver() = default;
 };
 
-struct IFightObserver
-{
-    virtual void on_fight(const std::shared_ptr<NPC> attacker, const std::shared_ptr<NPC> defender, bool win) = 0;
-};
-
-struct NPC: std::enable_shared_from_this<NPC>
-{
-    NpcType type{NpcType::Unknown};
-    int x = 0;
-    int y = 0;
-
+struct NPC : public std::enable_shared_from_this<NPC> {
+    int x{0};
+    int y{0};
+    NpcType type{UnknownType};
     std::vector<std::shared_ptr<IFightObserver>> observers;
 
-    NPC(NpcType t, int x0, int y0);
+    NPC(NpcType t, int x_, int y_);
     NPC(NpcType t, std::istream& is);
+    virtual ~NPC() = default;
 
-    void subscribe(std::shared_ptr<IFightObserver> obs);
-    void fight_notify(std::shared_ptr<NPC> defender, bool win);
-
+    void subscribe(std::shared_ptr<IFightObserver> observer);
+    void fight_notify(const std::shared_ptr<NPC>& defender, bool win);
     bool is_close(const std::shared_ptr<NPC>& other, size_t distance) const;
 
-    virtual bool is_orc() const;
-    virtual bool is_bear() const;
-    virtual bool is_squirrel() const;
+    // Двойная диспетчеризация
+    virtual bool accept(const std::shared_ptr<NPC>& attacker) = 0;
+    virtual bool visit_orc(const std::shared_ptr<Orc>& defender) = 0;
+    virtual bool visit_bear(const std::shared_ptr<Bear>& defender) = 0;
+    virtual bool visit_squirrel(const std::shared_ptr<Squirrel>& defender) = 0;
 
-    virtual bool fight(std::shared_ptr<Orc> other) = 0;
-    virtual bool fight(std::shared_ptr<Bear> other) = 0;
-    virtual bool fight(std::shared_ptr<Squirrel> other) = 0;
+    virtual void print() const = 0;
+    virtual void save(std::ostream& os) const;
 
-    virtual void accept(Visitor& vis, std::shared_ptr<NPC> other) = 0;
-
-    virtual void print();
-    virtual void save(std::ostream& os);
-
-    friend std::ostream& operator<<(std::ostream& os, NPC& npc);
+    friend std::ostream& operator<<(std::ostream& os, const NPC& npc);
 };

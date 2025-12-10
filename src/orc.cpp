@@ -1,45 +1,42 @@
+// orc.cpp
 #include "orc.hpp"
 #include "bear.hpp"
 #include "squirrel.hpp"
-#include "visitor.hpp"
+#include <memory>
 
-Orc::Orc(int x, int y): NPC(NpcType::OrcType, x, y) {}
-Orc::Orc(std::istream& is): NPC(NpcType::OrcType, is) {}
+Orc::Orc(int x_, int y_) : NPC(OrcType, x_, y_) {}
+Orc::Orc(std::istream &is) : NPC(OrcType, is) {}
 
-bool Orc::is_orc() const {return true;}
-
-bool Orc::fight(std::shared_ptr<Orc> other)
-{
-    bool win = rand() % 2;
-    fight_notify(other, win);
-    return win;
+bool Orc::accept(const std::shared_ptr<NPC> &attacker) {
+  return attacker->visit_orc(std::static_pointer_cast<Orc>(shared_from_this()));
 }
 
-bool Orc::fight(std::shared_ptr<Bear> other)
-{
-    bool win = true;
-    fight_notify(other, win);
-    return win;
+bool Orc::visit_orc(const std::shared_ptr<Orc> &defender) {
+  bool win = rand() % 2;
+  std::shared_ptr<NPC> npc_defender = std::static_pointer_cast<NPC>(defender);
+  fight_notify(npc_defender, win);
+  return win;
 }
 
-bool Orc::fight(std::shared_ptr<Squirrel> other)
-{
-    bool win = true;
-    fight_notify(other, win);
-    return win;
+bool Orc::visit_bear(const std::shared_ptr<Bear> &defender) {
+  bool win = true;
+  std::shared_ptr<NPC> npc_defender = std::static_pointer_cast<NPC>(defender);
+  fight_notify(npc_defender, win);
+  return win;
 }
 
-void Orc::accept(Visitor& vis, std::shared_ptr<NPC> other)
-{
-    vis.visit(std::static_pointer_cast<Orc>(shared_from_this()), other);
+bool Orc::visit_squirrel(const std::shared_ptr<Squirrel> &defender) {
+  bool win = true;
+  std::shared_ptr<NPC> npc_defender = std::static_pointer_cast<NPC>(defender);
+  fight_notify(npc_defender, win);
+  return win;
 }
 
-void Orc::print()
-{
-    std::cout << "Orc at (" << x << " , " << y << ")";
+void Orc::print() const { 
+  std::cout << "Orc at (" << x << ", " << y << ")" << std::endl; 
 }
 
-void Orc::save(std::ostream& os)
-{
-    os << (int)type << " " << x << " " << y << "\n";
+void Orc::save(std::ostream &os) const {
+  os << OrcType << std::endl;
+  os << x << " " << y << std::endl;
 }
