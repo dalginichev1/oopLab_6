@@ -1,26 +1,72 @@
+#include <cstring>
+#include <ctime>
+#include <fstream>
 #include <iostream>
-#include "world.hpp"
+#include <set>
+
 #include "factory.hpp"
-#include "observers.hpp"
+#include "world.hpp"
+
+using set_t = std::set<std::shared_ptr<NPC>>;
+
+void save(const set_t& array, const std::string& filename) {
+    std::ofstream fs(filename);
+    fs << array.size() << std::endl;
+    for (auto& n : array)
+        n->save(fs);
+    fs.flush();
+    fs.close();
+}
+
+set_t load(const std::string& filename) {
+    set_t result;
+    std::ifstream is(filename);
+    if (is.good() && is.is_open()) {
+        int count;
+        is >> count;
+        for (int i = 0; i < count; ++i)
+            result.insert(create(is));
+        is.close();
+    } else {
+        std::cerr << "Error: " << std::strerror(errno) << std::endl;
+    }
+    return result;
+}
 
 int main() {
-    World w;
+    std::srand(std::time(0));
+    World world;
 
-    auto consoleObs = std::make_shared<ConsoleObserver>();
+    std::cout << "Generating NPCs..." << std::endl;
+    for (size_t i = 0; i < 10; ++i) {
+        auto type = static_cast<NpcType>(std::rand() % 3 + 1);
+        world.add(create(type, std::rand() % 100, std::rand() % 100));
+    }
 
-    auto orc = NPCFactory::create(NpcType::OrcType, 10, 10);
-    auto bear = NPCFactory::create(NpcType::BearType, 14, 10);
-    auto squirrel = NPCFactory::create(NpcType::SquirrelType, 100, 50);
+    std::cout << "Saving..." << std::endl;
+    save(world.npcs, "npc.txt");
 
-    orc->subscribe(consoleObs);
-    bear->subscribe(consoleObs);
-    squirrel->subscribe(consoleObs);
+    std::cout << "Loading..." << std::endl;
+    world.npcs = load("npc.txt");
 
-    w.add(orc);
-    w.add(bear);
-    w.add(squirrel);
+    std::cout << "Initial state:" << std::endl;
+    world.print();
 
-    w.update(10);
+    std::cout << "Fighting..." << std::endl;
+    for (size_t distance = 20; (distance <= 100) && !world.npcs.empty(); distance += 10) {
+        auto dead_list = world.fight(distance);
+        for (auto& d : dead_list)
+            world.remove(d);
+
+        std::cout << "Fight stats ----------" << std::endl
+                  << "distance: " << distance << std::endl
+                  << "killed: " << dead_list.size() << std::endl
+                  << "survivors: " << world.npcs.size() << std::endl
+                  << std::endl;
+    }
+
+    std::cout << "Survivors:" << std::endl;
+    world.print();
 
     return 0;
 }

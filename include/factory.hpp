@@ -1,12 +1,8 @@
 #pragma once
 
-#include <memory>
 #include "npc.hpp"
-#include "orc.hpp"
-#include "bear.hpp"
-#include "squirrel.hpp"
+#include "BattleVisitor.hpp"
 
-struct NPCFactory
-{
-    static std::shared_ptr<NPC> create(NpcType T, int x, int y);
-};
+std::shared_ptr<NPC> create(NpcType type, int x, int y);
+std::shared_ptr<NPC> create(std::istream &is);
+std::unique_ptr<IVisitor> create_visitors(std::shared_ptr<NPC> attacker);
